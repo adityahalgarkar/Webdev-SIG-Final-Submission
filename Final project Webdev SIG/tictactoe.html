@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Tac Toe</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500&display=swap');
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Playfair Display', serif;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background-color: #f4f4f4;
+      transition: background-color 0.5s ease;
+    }
+
+    .overlay, .name-input-container, .result-popup, .rules-popup {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fdfcf9;
+      padding: 50px;
+      border-radius: 15px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+      text-align: center;
+      z-index: 2;
+    }
+
+    .overlay h1, .name-input-container h2, .result-popup h2, .rules-popup h2 {
+      font-size: 32px;
+      margin-bottom: 20px;
+    }
+
+    .overlay button, .name-input-container button, .result-popup button, .rules-popup button {
+      padding: 12px 24px;
+      font-size: 18px;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      background-color: #4CAF50;
+      color: white;
+      transition: background-color 0.3s;
+    }
+
+    .name-input-container input {
+      margin: 10px;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    .rules-popup {
+      width: 70vw;
+      max-width: 800px;
+      font-size: 18px;
+      line-height: 1.6;
+    }
+
+    .rules-popup ul {
+      text-align: left;
+      margin-top: 20px;
+    }
+
+    .game {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+      margin-top: 40px;
+      position: relative;
+    }
+
+    .cell {
+      width: 100px;
+      height: 100px;
+      background-color: #fff;
+      border: 2px solid #000;
+      font-size: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      transition: background-color 0.3s, transform 0.1s;
+    }
+
+    .cell:hover {
+      background-color: #f0f0f0;
+    }
+
+    .player-indicator {
+      margin-top: 20px;
+      font-size: 20px;
+    }
+
+    .player-X { color: red; }
+    .player-O { color: blue; }
+  </style>
+</head>
+<body>
+
+<div class="overlay" id="welcomePopup">
+  <h1>Welcome to the Tic Tac Toe (X-O game)! 🎉</h1>
+  <button onclick="showRules()">Proceed</button>
+</div>
+
+<div class="rules-popup" id="rulesPopup" style="display: none;">
+  <h2>📘 How to play the game & Features</h2>
+  <h3>Rules:</h3>
+  <ul>
+    <li>1. Players take turns placing X or O in an empty cell of a 3x3 grid.</li>
+    <li>2. The first player to align three marks horizontally, vertically, or diagonally wins.</li>
+    <li>3. If all cells are filled without a winner, the game ends in a draw.</li>
+  </ul>
+  <h3 style="margin-top: 30px;">Features:</h3>
+  <ul>
+    <li>1. Visually elegant Interface with premium fonts and styling.</li>
+    <li>2. Randomized player start for fairness.</li>
+    <li>3. Color-coded player moves with background tint.</li>
+    <li>4. Win detection with emoji effects.</li>
+    <li>5. Seamless reset without page reload.</li>
+  </ul>
+  <br>
+  <button onclick="showNameInput()">Proceed</button>
+</div>
+
+<div class="name-input-container" id="nameInputPopup" style="display: none;">
+  <h2>Enter Player Names</h2>
+  <input type="text" id="player1Name" placeholder="Player 1">
+  <input type="text" id="player2Name" placeholder="Player 2">
+  <br><br>
+  <button onclick="startGame()">Start Game</button>
+</div>
+
+<div id="gameBoard" style="display: none; text-align: center;">
+  <div class="player-indicator" id="playerIndicator"></div>
+  <div class="game" id="board"></div>
+</div>
+
+<div class="result-popup" id="resultPopup" style="display: none;">
+  <h2 id="resultMessage"></h2>
+  <button onclick="resetGame()">Restart</button>
+</div>
+
+<script>
+  const board = document.getElementById("board");
+  const playerIndicator = document.getElementById("playerIndicator");
+  const resultPopup = document.getElementById("resultPopup");
+  const resultMessage = document.getElementById("resultMessage");
+
+  let currentPlayer;
+  let cells = Array(9).fill(null);
+  let player1 = "Player 1";
+  let player2 = "Player 2";
+
+  function showRules() {
+    document.getElementById("welcomePopup").style.display = "none";
+    document.getElementById("rulesPopup").style.display = "block";
+  }
+
+  function showNameInput() {
+    document.getElementById("rulesPopup").style.display = "none";
+    document.getElementById("nameInputPopup").style.display = "block";
+  }
+
+  function startGame() {
+    player1 = document.getElementById("player1Name").value || "Player 1";
+    player2 = document.getElementById("player2Name").value || "Player 2";
+    document.getElementById("nameInputPopup").style.display = "none";
+    document.getElementById("gameBoard").style.display = "block";
+    init();
+  }
+
+  function init() {
+    cells = Array(9).fill(null);
+    board.innerHTML = "";
+    currentPlayer = Math.random() < 0.5 ? "X" : "O";
+    updateIndicator();
+    cells.forEach((_, i) => {
+      const cell = document.createElement("div");
+      cell.classList.add("cell");
+      cell.addEventListener("click", () => handleMove(i, cell), { once: true });
+      board.appendChild(cell);
+    });
+  }
+
+  function updateIndicator() {
+    document.body.style.backgroundColor = currentPlayer === "X" ? "#ffe6e6" : "#e6f0ff";
+    const name = currentPlayer === "X" ? player1 : player2;
+    const className = currentPlayer === "X" ? "player-X" : "player-O";
+    playerIndicator.innerHTML = `Current Turn: <span class="${className}">${name}</span>`;
+  }
+
+  function handleMove(index, cell) {
+    cells[index] = currentPlayer;
+    cell.textContent = currentPlayer;
+    cell.style.color = currentPlayer === "X" ? "red" : "blue";
+    if (checkWinner()) {
+      showResult(`${currentPlayer === "X" ? player1 : player2} wins! ${currentPlayer === "X" ? "🔥" : "❄️"}`);
+    } else if (cells.every(c => c)) {
+      showResult("The game is a draw. 🤝");
+    } else {
+      currentPlayer = currentPlayer === "X" ? "O" : "X";
+      updateIndicator();
+    }
+  }
+
+  function showResult(message) {
+    resultMessage.textContent = message;
+    resultPopup.style.display = "block";
+  }
+
+  function resetGame() {
+    resultPopup.style.display = "none";
+    init();
+  }
+
+  function checkWinner() {
+    const winPatterns = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8],
+      [0, 3, 6], [1, 4, 7], [2, 5, 8],
+      [0, 4, 8], [2, 4, 6]
+    ];
+    for (let pattern of winPatterns) {
+      const [a, b, c] = pattern;
+      if (cells[a] && cells[a] === cells[b] && cells[b] === cells[c]) {
+        return true;
+      }
+    }
+    return false;
+  }
+</script>
+
+</body>
+</html>
